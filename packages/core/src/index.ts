@@ -1,3 +1,2 @@
-export function greet(name: string): string {
-    return `Welcome to the dungeon, ${name}!`;
-}
+export * from './types';
+export * from './rect';
