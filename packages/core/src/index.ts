@@ -5,3 +5,4 @@ export * from './grid';
 export * from './ascii';
 export * from './rooms';
 export * from './bsp';
+export * from './corridors';
