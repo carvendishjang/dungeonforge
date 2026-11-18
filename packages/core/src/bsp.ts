@@ -1,5 +1,5 @@
 import type { Rng } from './rng';
-import type { Rect } from './types';
+import type { Rect, Room } from './types';
 
 /**
  * Cut `rect` into two smaller rects that exactly cover it.
@@ -71,9 +71,9 @@ export function buildTree(
 
 /** All leaves of the tree, left to right. */
 export function leaves(node: BspNode): BspNode[] {
-    // TODO base case: no children → an array with just this node
+    // base case: no children → an array with just this node
     if (!node.left || !node.right) return [node];
-    // TODO recursive case: leaves of left, followed by leaves of right
+    // recursive case: leaves of left, followed by leaves of right
     // (spread both into one array: [...a, ...b])
     return [...leaves(node.left), ...leaves(node.right)];
 }
@@ -85,15 +85,49 @@ export function leaves(node: BspNode): BspNode[] {
 export function roomInLeaf(rng: Rng, leaf: Rect, minRoomSize: number): Rect | null {
     const maxW = leaf.width - 2;   // -2 = one wall tile on each side
     const maxH = leaf.height - 2;
-    // TODO 1: return null if maxW or maxH is smaller than minRoomSize
+    // return null if maxW or maxH is smaller than minRoomSize
     if (maxW < minRoomSize || maxH < minRoomSize) return null;
-    // TODO 2: w = random between minRoomSize and maxW; same for h
+    // w = random between minRoomSize and maxW; same for h
     const w: number = rng.int(minRoomSize, maxW);
     const h: number = rng.int(minRoomSize, maxH);
-    // TODO 3: x = random so the room starts at least 1 tile inside the leaf
+    // x = random so the room starts at least 1 tile inside the leaf
     // and ends at least 1 tile before the leaf's right edge
     // same for y
     const x = rng.int(leaf.x + 1, leaf.x + leaf.width - w - 1);
     const y = rng.int(leaf.y + 1, leaf.y + leaf.height - h - 1);
     return { x, y, width: w, height: h };
+}
+
+export interface BspOptions {
+    width: number;       // map width
+    height: number;      // map height
+    minLeafSize: number; // smallest region the splitter may create
+    maxDepth: number;    // up to 2^maxDepth rooms
+    minRoomSize: number; // smallest room side
+}
+
+// Returning an object lets us add fields later without breaking callers
+export interface BspResult {
+    tree: BspNode;
+    rooms: Room[];
+}
+
+export function placeRoomsBsp(rng: Rng, opts: BspOptions): BspResult {
+    // build the tree over the WHOLE map: a rect at x 0, y 0 with the map's width and height
+    const tree = buildTree(rng, {x: 0, y: 0, width: opts.width, height: opts.height}, opts.minLeafSize, opts.maxDepth);
+
+    const rooms: Room[] = [];
+    // for each leaf of the tree:
+    //   - try roomInLeaf(rng, leaf.rect, opts.minRoomSize)
+    //   - if it's not null, push { id: rooms.length, ...rect }
+    //   (use a for...of loop, as in your demo)
+    for (const leaf of leaves(tree)) {
+        const rect = roomInLeaf(rng, leaf.rect, opts.minRoomSize);
+        if (rect) {
+            const {x, y, width, height} = rect;
+            rooms.push({ id: rooms.length, x, y, width, height });
+        }
+    }
+
+    return { tree, rooms };
 }

@@ -17,16 +17,16 @@ export function placeRoomsNaive(rng: Rng, opts: RoomOptions): Room[] {
     const rooms: Room[] = [];
 
     for (let attempt = 0; attempt < maxAttempts && rooms.length < maxRooms; attempt++) {
-        // TODO 1: random room width w and height h, each between minSize and maxSize
+        // random room width w and height h, each between minSize and maxSize
         const w = rng.int(minSize, maxSize);
         const h = rng.int(minSize, maxSize);
-        // TODO 2: random x, y so the room stays at least 1 tile inside the map border
+        // random x, y so the room stays at least 1 tile inside the map border
         const x = rng.int(1, width - w - 1);
         const y = rng.int(1, height - h -1);
-        // TODO 3: if it overlaps ANY existing room (padding 1), `continue` to the next attempt
+        // if it overlaps ANY existing room (padding 1), `continue` to the next attempt
         const candidate : Rect = {x, y, width: w, height: h}; 
         if(rooms.some((other) => rectsOverlap(candidate, other, 1))) continue;
-        // TODO 4: otherwise push { id: rooms.length, x, y, width: w, height: h }
+        // otherwise push { id: rooms.length, x, y, width: w, height: h }
         rooms.push({ id: rooms.length, x, y, width: w, height: h});
     }
 

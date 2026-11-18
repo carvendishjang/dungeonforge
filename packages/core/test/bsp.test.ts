@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createRng } from '../src/rng';
-import { splitRect, buildTree, leaves, roomInLeaf, type BspNode } from '../src/bsp';
+import { splitRect, buildTree, leaves, roomInLeaf, placeRoomsBsp, type BspNode } from '../src/bsp';
 import { rectsOverlap } from '../src/rect';
 
 describe('splitRect', () => {
@@ -169,5 +169,43 @@ describe('BSP rooms', () => {
         }
       }
     }
+  });
+});
+
+describe('placeRoomsBsp', () => {
+  const opts = { width: 60, height: 30, minLeafSize: 8, maxDepth: 4, minRoomSize: 3 };
+
+  it('is deterministic', () => {
+    expect(placeRoomsBsp(createRng(42), opts)).toEqual(placeRoomsBsp(createRng(42), opts));
+  });
+
+  it('gives every leaf a room when leaves are big enough', () => {
+    // minLeafSize 8 leaves room for a 3-tile room plus margins, so no leaf is skipped
+    for (let seed = 0; seed < 20; seed++) {
+      const { tree, rooms } = placeRoomsBsp(createRng(seed), opts);
+      expect(rooms.length).toBe(leaves(tree).length);
+    }
+  });
+
+  it('keeps rooms inside the map border, never overlapping', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const { rooms } = placeRoomsBsp(createRng(seed), opts);
+      for (const r of rooms) {
+        expect(r.x).toBeGreaterThanOrEqual(1);
+        expect(r.y).toBeGreaterThanOrEqual(1);
+        expect(r.x + r.width).toBeLessThanOrEqual(opts.width - 1);
+        expect(r.y + r.height).toBeLessThanOrEqual(opts.height - 1);
+      }
+      for (let i = 0; i < rooms.length; i++) {
+        for (let j = i + 1; j < rooms.length; j++) {
+          expect(rectsOverlap(rooms[i], rooms[j], 1)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('gives rooms ids 0..n-1', () => {
+    const { rooms } = placeRoomsBsp(createRng(3), opts);
+    expect(rooms.map((r) => r.id)).toEqual(rooms.map((_, i) => i));
   });
 });
