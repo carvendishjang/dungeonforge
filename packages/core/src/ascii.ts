@@ -9,9 +9,12 @@ const SYMBOLS: Record<Tile, string> = {
     door: '+',
 };
 
+/** Render rows of tiles (e.g. DungeonMap.tiles) as ASCII. */
+export function tilesToAscii(tiles: Tile[][]): string {
+    return tiles.map((row) => row.map((tile) => SYMBOLS[tile]).join('')).join('\n');
+}
+
+/** Render a Grid as ASCII. */
 export function toAscii(grid: Grid<Tile>): string {
-    return grid
-        .toRows()
-        .map((row) => (row.map((tile) => SYMBOLS[tile]).join('')))
-        .join('\n');
+    return tilesToAscii(grid.toRows());
 }
