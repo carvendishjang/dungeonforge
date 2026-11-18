@@ -68,3 +68,32 @@ export function buildTree(
         right: buildTree(rng, b, minLeafSize, maxDepth, depth + 1),
     } 
 }
+
+/** All leaves of the tree, left to right. */
+export function leaves(node: BspNode): BspNode[] {
+    // TODO base case: no children → an array with just this node
+    if (!node.left || !node.right) return [node];
+    // TODO recursive case: leaves of left, followed by leaves of right
+    // (spread both into one array: [...a, ...b])
+    return [...leaves(node.left), ...leaves(node.right)];
+}
+
+/**
+ * A random room inside `leaf`, keeping a 1-tile wall margin on every side.
+ * Returns null if the leaf is too small for a room of minRoomSize.
+ */
+export function roomInLeaf(rng: Rng, leaf: Rect, minRoomSize: number): Rect | null {
+    const maxW = leaf.width - 2;   // -2 = one wall tile on each side
+    const maxH = leaf.height - 2;
+    // TODO 1: return null if maxW or maxH is smaller than minRoomSize
+    if (maxW < minRoomSize || maxH < minRoomSize) return null;
+    // TODO 2: w = random between minRoomSize and maxW; same for h
+    const w: number = rng.int(minRoomSize, maxW);
+    const h: number = rng.int(minRoomSize, maxH);
+    // TODO 3: x = random so the room starts at least 1 tile inside the leaf
+    // and ends at least 1 tile before the leaf's right edge
+    // same for y
+    const x = rng.int(leaf.x + 1, leaf.x + leaf.width - w - 1);
+    const y = rng.int(leaf.y + 1, leaf.y + leaf.height - h - 1);
+    return { x, y, width: w, height: h };
+}

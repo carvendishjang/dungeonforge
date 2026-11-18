@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createRng } from '../src/rng';
-import { splitRect, buildTree, type BspNode } from '../src/bsp';
+import { splitRect, buildTree, leaves, roomInLeaf, type BspNode } from '../src/bsp';
+import { rectsOverlap } from '../src/rect';
 
 describe('splitRect', () => {
   it('returns null when too small to cut either way', () => {
@@ -95,5 +96,78 @@ describe('buildTree', () => {
 
   it('is deterministic', () => {
     expect(buildTree(createRng(42), map, 6, 4)).toEqual(buildTree(createRng(42), map, 6, 4));
+  });
+});
+
+describe('leaves', () => {
+  it('returns every leaf, none of which has children', () => {
+    const tree = buildTree(createRng(5), { x: 0, y: 0, width: 60, height: 30 }, 6, 4);
+    const ls = leaves(tree);
+    expect(ls.length).toBe(countLeaves(tree));
+    for (const l of ls) {
+      expect(l.left).toBeUndefined();
+      expect(l.right).toBeUndefined();
+    }
+  });
+
+  it('a single leaf returns itself', () => {
+    const tree = buildTree(createRng(1), { x: 0, y: 0, width: 10, height: 10 }, 6, 0);
+    expect(leaves(tree)).toEqual([tree]);
+  });
+});
+
+describe('roomInLeaf', () => {
+    const leaf = { x: 10, y: 5, width: 12, height: 8 };
+
+    it('stays inside the leaf with a 1-tile margin', () => {
+        for (let seed = 0; seed < 100; seed++) {
+        const r = roomInLeaf(createRng(seed), leaf, 3);
+        if (r === null) throw new Error('expected a room');
+        expect(r.x).toBeGreaterThanOrEqual(leaf.x + 1);
+        expect(r.y).toBeGreaterThanOrEqual(leaf.y + 1);
+        expect(r.x + r.width).toBeLessThanOrEqual(leaf.x + leaf.width - 1);
+        expect(r.y + r.height).toBeLessThanOrEqual(leaf.y + leaf.height - 1);
+        expect(r.width).toBeGreaterThanOrEqual(3);
+        expect(r.height).toBeGreaterThanOrEqual(3);
+        }
+    });
+
+    it('returns null when the leaf is too small', () => {
+        expect(roomInLeaf(createRng(1), { x: 0, y: 0, width: 5, height: 5 }, 4)).toBeNull();
+    });
+
+   it('varies room size and position across seeds', () => {
+    const shapes = new Set<string>();
+    for (let seed = 0; seed < 50; seed++) {
+      const r = roomInLeaf(createRng(seed), leaf, 3);
+      if (r) shapes.add(`${r.x},${r.y},${r.width},${r.height}`);
+    }
+    expect(shapes.size).toBeGreaterThan(10);
+  });
+
+  it('does not always place the room in the top-left corner', () => {
+    const xs = new Set<number>();
+    for (let seed = 0; seed < 50; seed++) {
+      const r = roomInLeaf(createRng(seed), leaf, 3);
+      if (r) xs.add(r.x);
+    }
+    expect(xs.size).toBeGreaterThan(1);
+  });
+});
+
+describe('BSP rooms', () => {
+  it('rooms from different leaves never overlap (50 seeds)', () => {
+    for (let seed = 0; seed < 50; seed++) {
+      const rng = createRng(seed);
+      const tree = buildTree(rng, { x: 0, y: 0, width: 60, height: 30 }, 8, 4);
+      const rooms = leaves(tree)
+        .map((l) => roomInLeaf(rng, l.rect, 3))
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      for (let i = 0; i < rooms.length; i++) {
+        for (let j = i + 1; j < rooms.length; j++) {
+          expect(rectsOverlap(rooms[i], rooms[j], 1)).toBe(false);
+        }
+      }
+    }
   });
 });

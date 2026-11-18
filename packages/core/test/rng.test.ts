@@ -43,4 +43,8 @@ describe('createRng', () => {
     expect(items).toContain(rng.pick(items));
     expect(() => rng.pick([])).toThrow();
   });
+
+  it('int() throws when min > max', () => {
+    expect(() => createRng(1).int(5, 3)).toThrow();
+  });
 });

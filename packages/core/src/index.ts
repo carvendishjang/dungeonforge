@@ -3,4 +3,5 @@ export * from './rect';
 export * from './rng';
 export * from './grid';
 export * from './ascii';
- export * from './rooms';
+export * from './rooms';
+export * from './bsp';

@@ -24,6 +24,7 @@ export function createRng(seed: number): Rng {
     return {
         next,
         int(min, max) {
+            if (min > max) throw new Error(`rng.int: min (${min}) > max (${max})`);
             const count = max - min + 1;
             return Math.floor(next() * count) + min;
             
