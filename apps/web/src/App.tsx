@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import { createConfig, generate, isMode, MODES, type Mode } from '@dungeonforge/core';
+import { useState } from 'react';
+import { isMode, MODES, type Mode } from '@dungeonforge/core';
 import { MapCanvas } from './MapCanvas';
+import { useDungeon } from './useDungeon';
 
 // Math.random() is fine HERE: it only picks a seed. Generation itself stays deterministic.
 const randomSeed = () => Math.floor(Math.random() * 2 ** 32);
@@ -11,10 +12,7 @@ export function App() {
     const [width, setWidth] = useState(60);
     const [height, setHeight] = useState(30);
 
-    const map = useMemo(
-        () => generate(createConfig(mode, seed, width, height)),
-        [mode, seed, width, height],
-    );
+    const { map, error } = useDungeon(mode, seed, width, height);
 
     return (
         <main>
@@ -42,8 +40,14 @@ export function App() {
                 </label>
             </div>
 
-            <p>{mode}, seed {map.seed}, {map.width}×{map.height}, {map.rooms.length} rooms</p>
-            <MapCanvas map={map} />
+            {error && <p className="error">{error}: is the API running? (npm run server)</p>}
+
+            {map && (
+                <>
+                    <p>{mode}, seed {map.seed}, {map.width}×{map.height}, {map.rooms.length} rooms</p>
+                    <MapCanvas map={map} />
+                </>
+            )}
         </main>
     );
 }

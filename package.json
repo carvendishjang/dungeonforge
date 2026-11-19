@@ -8,9 +8,10 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/core/scripts && tsc --noEmit -p apps/cli && tsc --noEmit -p apps/web",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/core/scripts && tsc --noEmit -p apps/cli && tsc --noEmit -p apps/web && tsc --noEmit -p apps/server",
     "gen": "tsx apps/cli/src/main.ts",
-    "dev": "npm run dev -w apps/web"
+    "dev": "npm run dev -w apps/web",
+    "server": "tsx watch apps/server/src/main.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

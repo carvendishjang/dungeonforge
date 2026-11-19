@@ -2,7 +2,6 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { generate, tilesToAscii } from '@dungeonforge/core';
 import { parseCliArgs, USAGE } from './args';
-import { stringify } from 'node:querystring';
 
 try {
     const { config, out } = parseCliArgs(process.argv.slice(2));
