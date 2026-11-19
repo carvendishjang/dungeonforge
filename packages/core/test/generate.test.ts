@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { generateBspDungeon, type GenerateOptions } from '../src/generate';
+import { generate, generateBspDungeon, type DungeonConfig, type GenerateOptions } from '../src/generate';
+import { checkConnectivity } from '../src/validate';
 
 const opts: GenerateOptions = {
   seed: 42, width: 60, height: 30, minLeafSize: 6, maxDepth: 4, minRoomSize: 3,
@@ -45,5 +46,37 @@ describe('generateBspDungeon', () => {
       }
     }
     expect(map.tiles.flat()).toContain('corridor');
+  });
+});
+
+describe('generate (discriminated union)', () => {
+  const caves: DungeonConfig = { mode: 'caves', seed: 36, width: 60, height: 30, fillChance: 0.45, iterations: 5 };
+
+  it("mode 'bsp' gives exactly what generateBspDungeon gives", () => {
+    expect(generate({ mode: 'bsp', ...opts })).toEqual(generateBspDungeon(opts));
+  });
+
+  it("mode 'caves' returns a connected map with no rooms", () => {
+    const map = generate(caves);
+    expect(map.width).toBe(60);
+    expect(map.height).toBe(30);
+    expect(map.rooms).toEqual([]);
+    expect(checkConnectivity(map.tiles).walkable).toBeGreaterThan(0);
+    expect(checkConnectivity(map.tiles).connected).toBe(true);
+  });
+
+  it("mode 'caves' is deterministic", () => {
+    expect(generate(caves)).toEqual(generate(caves));
+  });
+
+  it('throws on an unknown mode at runtime (e.g. bad JSON from the API)', () => {
+    const bad = { mode: 'lava', seed: 1 } as unknown as DungeonConfig;
+    expect(() => generate(bad)).toThrow(/Unknown mode/);
+  });
+
+  it('rejects mixed-up options at compile time', () => {
+    // @ts-expect-error: caves mode needs fillChance/iterations, not BSP options
+    const wrong: DungeonConfig = { mode: 'caves', seed: 1, width: 10, height: 10, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 };
+    expect(wrong.mode).toBe('caves');
   });
 });

@@ -1,8 +1,19 @@
-import { generateBspDungeon, tilesToAscii } from '../src/index';
+import { generate, tilesToAscii, type DungeonConfig } from '../src/index';
 
-// Read the seed from the command line: npx tsx .../demo.ts 7   (defaults to 42)
-const seed = Number(process.argv[2] ?? 42);
+// npx tsx packages/core/scripts/demo.ts [bsp|caves] [seed]
+const mode = process.argv[2] ?? 'bsp';
+const seed = Number(process.argv[3] ?? 42);
 
-const map = generateBspDungeon({ seed, width: 60, height: 30, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 });
+if (mode !== 'bsp' && mode !== 'caves') {
+  console.error(`Unknown mode "${mode}". Use bsp or caves.`);
+  process.exit(1);
+}
+
+const config: DungeonConfig =
+  mode === 'caves'
+    ? { mode, seed, width: 60, height: 30, fillChance: 0.45, iterations: 5 }
+    : { mode, seed, width: 60, height: 30, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 };
+
+const map = generate(config);
 console.log(tilesToAscii(map.tiles));
-console.log(`seed ${map.seed}: ${map.rooms.length} rooms`);
+console.log(`${mode}, seed ${map.seed}: ${map.rooms.length} rooms`);

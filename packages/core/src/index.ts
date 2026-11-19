@@ -8,3 +8,4 @@ export * from './bsp';
 export * from './corridors';
 export * from './generate';
 export * from './validate';
+export * from './caves';
