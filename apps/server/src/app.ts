@@ -13,8 +13,12 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(500).json({ error: 'Internal server error' });
 };
 
+export interface AppOptions {
+    staticDir?: string; // folder of built web files to serve; omit in tests and dev
+}
+
 /** Builds the app without starting it, so tests can start it on any port. */
-export function createApp() {
+export function createApp({ staticDir }: AppOptions = {}) {
     const app = express();
     app.use(express.json({ limit: '10kb' }));   // parse JSON bodies; reject anything bigger than 10 kB
 
@@ -34,6 +38,7 @@ export function createApp() {
         res.json( generate(createConfig(mode, seed, width, height)));
     });
 
+    if (staticDir) app.use(express.static(staticDir));
     app.use(errorHandler);  // must come AFTER the routes
     return app;
 }

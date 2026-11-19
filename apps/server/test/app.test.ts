@@ -3,6 +3,9 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createConfig, generate } from '@dungeonforge/core';
 import { createApp } from '../src/app';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 let server: Server;
 let baseUrl: string;
@@ -70,5 +73,27 @@ describe('POST /api/generate', () => {
 
   it('rejects bodies over 10 kB with 413', async () => {
     expect((await post({ pad: 'x'.repeat(20_000) })).status).toBe(413);
+  });
+});
+
+describe('serving the web build', () => {
+  it('serves index.html at / and still answers the API', async () => {
+    // a throwaway folder with a fake index.html: the test doesn't depend on a real build
+    const dir = mkdtempSync(join(tmpdir(), 'df-web-'));
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><title>DungeonForge</title>');
+
+    const s = createApp({ staticDir: dir }).listen(0);
+    await new Promise<void>((resolve) => s.once('listening', () => resolve()));
+    const url = `http://localhost:${(s.address() as AddressInfo).port}`;
+
+    try {
+      const page = await fetch(`${url}/`);
+      expect(page.status).toBe(200);
+      expect(page.headers.get('content-type')).toMatch(/text\/html/);
+      expect(await page.text()).toContain('DungeonForge');
+      expect((await fetch(`${url}/api/health`)).status).toBe(200);
+    } finally {
+      await new Promise<void>((resolve) => s.close(() => resolve()));
+    }
   });
 });
