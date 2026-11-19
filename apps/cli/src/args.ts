@@ -1,7 +1,6 @@
 import { parseArgs } from 'node:util';
+import { createConfig, isMode } from '@dungeonforge/core';
 import type { DungeonConfig } from '@dungeonforge/core';
-import { resolveObjectURL } from 'node:buffer';
-import test from 'node:test';
 
 export interface CliOptions {
     config: DungeonConfig;
@@ -39,13 +38,6 @@ export const USAGE =
         const width = parseIntFlag('width', values.width, 10, 200);
         const height = parseIntFlag('height', values.height, 10, 200);
 
-        if (values.mode === 'bsp') return {
-            config: { mode: 'bsp', seed, width, height, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 },
-            out: values.out,
-        }
-        else if (values.mode === 'caves') return {
-            config: { mode: 'caves', seed, width, height, fillChance: 0.45, iterations: 5 },
-            out: values.out,
-        }
-        else throw new Error(`--mode must be bsp or caves, got "${values.mode}"`);
+        if (!isMode(values.mode)) throw new Error(`--mode must be bsp or caves, got "${values.mode}"`);
+        return { config: createConfig(values.mode, seed, width, height), out: values.out };
     }

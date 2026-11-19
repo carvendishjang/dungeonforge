@@ -29,12 +29,8 @@ export function generateBspDungeon(opts: GenerateOptions): DungeonMap {
 }
 
 export function generateCaveDungeon(opts: CaveGenerateOptions): DungeonMap {
-    // TODO 1: const rng = createRng(opts.seed)
     const rng = createRng(opts.seed);
-    // TODO 2: const grid = keepLargestRegion(generateCaves(rng, opts))
     const grid = keepLargestRegion(generateCaves(rng, opts));
-    // TODO 3: return a DungeonMap: width, height, seed from opts; tiles: grid.toRows(); rooms: []
-    //         (caves have no rectangular rooms, so the list is empty)
     return { width: opts.width, height: opts.height, seed: opts.seed, tiles: grid.toRows(), rooms: [] };
 }
 
@@ -43,12 +39,31 @@ export function generate(config: DungeonConfig): DungeonMap {
     switch (config.mode) {
         case 'bsp':
             return generateBspDungeon(config);   // here TS knows config has minLeafSize etc.
-        // TODO 4: case 'caves': return generateCaveDungeon(config);
         case 'caves':
             return generateCaveDungeon(config);
         default: {
             const unreachable: never = config;   // compile error if a mode is missing a case
             throw new Error(`Unknown mode: ${JSON.stringify(unreachable)}`);
         }
+    }
+}
+
+/** 'bsp | 'caves', taken from the union itself so it can never get out of sync. */
+export type Mode = DungeonConfig['mode'];
+
+export const MODES: readonly Mode[] = ['bsp', 'caves'];
+
+/** Type predicate: turns an unknown string into a Mode (or not). */
+export function isMode(value: string): value is Mode {
+    return (MODES as readonly string[]).includes(value);
+}
+
+/** Default tuning for each mode; callers choose only seed and size. */
+export function createConfig(mode: Mode, seed: number, width: number, height: number): DungeonConfig {
+    switch (mode) {
+        case 'bsp':
+            return { mode, seed, width, height, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 };
+        case 'caves':
+            return { mode, seed, width, height, fillChance: 0.45, iterations: 5 };
     }
 }

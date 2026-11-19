@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generate, generateBspDungeon, type DungeonConfig, type GenerateOptions } from '../src/generate';
+import { createConfig, generate, generateBspDungeon, isMode, type DungeonConfig, type GenerateOptions } from '../src/generate';
 import { checkConnectivity } from '../src/validate';
 
 const opts: GenerateOptions = {
@@ -78,5 +78,21 @@ describe('generate (discriminated union)', () => {
     // @ts-expect-error: caves mode needs fillChance/iterations, not BSP options
     const wrong: DungeonConfig = { mode: 'caves', seed: 1, width: 10, height: 10, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 };
     expect(wrong.mode).toBe('caves');
+  });
+});
+
+describe('createConfig / isMode', () => {
+  it('fills in the default tuning for each mode', () => {
+    expect(createConfig('bsp', 1, 60, 30)).toEqual(
+      { mode: 'bsp', seed: 1, width: 60, height: 30, minLeafSize: 6, maxDepth: 4, minRoomSize: 3 });
+    expect(createConfig('caves', 1, 60, 30)).toEqual(
+      { mode: 'caves', seed: 1, width: 60, height: 30, fillChance: 0.45, iterations: 5 });
+  });
+
+  it('isMode accepts only known modes', () => {
+    expect(isMode('bsp')).toBe(true);
+    expect(isMode('caves')).toBe(true);
+    expect(isMode('lava')).toBe(false);
+    expect(isMode('BSP')).toBe(false);   // case-sensitive
   });
 });

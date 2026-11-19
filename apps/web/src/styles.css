@@ -1,0 +1,5 @@
+body { margin: 0; font-family: system-ui, sans-serif; background: #14111f; color: #eee; }
+main { padding: 24px; }
+pre  { font-size: 12px; line-height: 1; }
+.controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }
+.controls input[type="number"] { width: 120px; }
