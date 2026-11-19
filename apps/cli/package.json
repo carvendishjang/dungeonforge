@@ -1,0 +1,8 @@
+{
+    "name": "@dungeonforge/cli",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "@dungeonforge/core": "*"
+    }
+}
